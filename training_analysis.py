@@ -1,21 +1,12 @@
-import matplotlib.pyplot as plt
-from pprint import pprint
-import os
-
-from deepracer.tracks import TrackIO, Track
-from deepracer.logs import \
-    SimulationLogsIO as slio, \
-    NewRewardUtils as nr, \
-    AnalysisUtils as au, \
-    PlottingUtils as pu, \
-    ActionBreakdownUtils as abu, \
-    DeepRacerLog, \
-    S3FileHandler, FSFileHandler
-
 # Ignore deprecation warnings we have no power over
 import warnings
+
+from deepracer.logs import AnalysisUtils as au, DeepRacerLog, PlottingUtils as pu, S3FileHandler
+from deepracer.tracks import Track, TrackIO
+
+
 warnings.filterwarnings('ignore')
-PREFIX='rl-deepracer-sagemaker-63'   # Name of the model, without trailing '/'
+PREFIX='rl-deepracer-sagemaker-82'   # Name of the model, without trailing '/'
 BUCKET='bucket'       # Bucket name is default 'bucket' when training locally
 PROFILE='minio'          # The credentials profile in .aws - 'minio' for local training
 S3_ENDPOINT_URL='http://minio:9000'

@@ -27,3 +27,5 @@ else
     export ROBOMAKER_COMMAND=""
     docker compose $COMPOSE_FILES -p $STACK_NAME down
 fi
+
+../viewer/stop.sh
