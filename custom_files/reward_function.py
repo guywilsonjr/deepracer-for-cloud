@@ -3,9 +3,11 @@ import sys
 
 from .reward import constants
 from .reward.centerline_reward import CenterlineReward
-from .reward.geometry import LinearFunction, LineSegment, Point
+from .reward.geometry import Point
+from .reward.heading_reward import HeadingReward
 from .reward.speed_reward import SpeedReward
 from .reward.steering_reward import SteeringReward
+from .reward.target_direction import TargetProcessor
 from .reward.timer import Timer
 from .reward.track import TrackSegments, TrackWaypoints
 
@@ -17,12 +19,26 @@ track_waypoints = TrackWaypoints()
 class RunState:
 
     def __init__(self, params, prev_run_state, fps):
-        self.centerline_rew = CenterlineReward(distance_from_center=params['distance_from_center'], track_width=params['track_width'])
         self._set_raw_inputs(params)
         self._set_derived_inputs(fps)
         self._set_future_inputs()
         self.prev_run_state = prev_run_state
         self._set_prev_inputs()
+        self.target_processor = TargetProcessor(track_waypoints=track_waypoints, location=Point(params['x'], params['y']))
+        self.centerline_rew = CenterlineReward(distance_from_center=params['distance_from_center'], track_width=params['track_width'])
+        self.steering_rew = SteeringReward(
+            steering_angle=self.steering_angle,
+            heading360=self.heading360,
+            closest_ahead_waypoint_index=self.closest_ahead_waypoint_index,
+            curve_factor=self.curve_factor,
+            track_segments=track_segments
+        )
+        self.heading_rew = HeadingReward(
+            track_waypoints=track_waypoints,
+            location=self.location,
+            closest_ahead_waypoint_index=self.closest_ahead_waypoint_index,
+            heading360=self.heading360
+        )
 
     def set_next_state(self, next_state):
         self.next_state = next_state
@@ -115,14 +131,8 @@ class RunState:
     @property
     def steering_reward(self):
         # We want to reward for both being on target and for requiring a small steering angle
-        steering_reward = SteeringReward(
-            steering_angle=self.steering_angle,
-            heading360=self.heading360,
-            closest_ahead_waypoint_index=self.closest_ahead_waypoint_index,
-            curve_factor=self.curve_factor,
-            track_segments=track_segments
-        )
-        return steering_reward.reward
+
+        return self.steering_rew.reward
 
 
 
@@ -133,8 +143,7 @@ class RunState:
         Reward is exponentially based on distance from center line with max reward at quarter track width
         and minimum reward at half track width
         '''
-        reward_data = CenterlineReward(distance_from_center=self.distance_from_center, track_width=self.track_width)
-        return reward_data.reward
+        return self.centerline_rew.reward
 
     @property
     def waypoint_heading_reward(self):
@@ -142,23 +151,8 @@ class RunState:
         Reward for heading towards the next waypoint
         Reward is based on the heading error between the car and the current waypoint segment
         '''
-        next_wp = track_waypoints.waypoints_map[self.closest_ahead_waypoint_index]
-        start_x, start_y = self.x, self.y
-        end_x, end_y = next_wp.x, next_wp.y
-        for i in range(constants.WAYPOINT_LOOKAHEAD_DISTANCE):
-            start_x, start_y = end_x, end_y
-            next_wp = next_wp.next_waypoint
-            end_x, end_y = next_wp.x, next_wp.y
+        return self.heading_rew.reward
 
-        segment = LinearFunction.from_points(start_x, start_y, end_x, end_y)
-        perp_waypoint_func = LinearFunction.get_perp_func(end_x, end_y, segment.slope)
-        target_point = perp_waypoint_func.get_closest_point_on_line(self.x, self.y)
-        end_point = Point(target_point.x, target_point.y)
-        target_line = LineSegment(self.location, end_point)
-
-        heading_error = min(abs(target_line.angle - self.heading360), constants.MAX_HEADING_ERROR)
-        heading_factor = math.cos(math.radians(heading_error))
-        return heading_factor
 
     @property
     def speed_reward(self):

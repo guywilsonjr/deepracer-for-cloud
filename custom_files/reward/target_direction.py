@@ -1,22 +1,27 @@
-import math
-
 from pydantic import BaseModel
 
-from .constants import MAX_HEADING_ERROR, WAYPOINT_LOOKAHEAD_DISTANCE
+from .constants import WAYPOINT_LOOKAHEAD_DISTANCE
 from .geometry import LinearFunction, LineSegment, Point
 from .track import TrackWaypoints
 
 
-class HeadingReward(BaseModel):
+class TargetData(BaseModel):
+    target_point: Point
+    target_line: LineSegment
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class TargetProcessor(BaseModel):
     track_waypoints: TrackWaypoints
     location: Point
-    closest_ahead_waypoint_index: int
-    heading360: float
+
     class Config:
         arbitrary_types_allowed = True
 
     @property
-    def cos_reward(self) -> float:
+    def target_data(self) -> TargetData:
         next_wp = self.track_waypoints.waypoints_map[self.closest_ahead_waypoint_index]
         start_x, start_y = self.location.x, self.location.y
         end_x, end_y = next_wp.x, next_wp.y
@@ -31,10 +36,4 @@ class HeadingReward(BaseModel):
         end_point = Point(target_point.x, target_point.y)
         target_line = LineSegment(self.location, end_point)
 
-        heading_error = min(abs(target_line.angle - self.heading360), MAX_HEADING_ERROR)
-        heading_factor = math.cos(math.radians(heading_error))
-        return heading_factor
-
-    @property
-    def reward(self) -> float:
-        return self.cos_reward
+        return TargetData(target_point=target_point, target_line=target_line)
