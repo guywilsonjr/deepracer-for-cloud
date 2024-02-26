@@ -1,4 +1,7 @@
 import math
+from typing import Optional
+
+from pydantic import BaseModel
 
 from .constants import INF, NINF
 
@@ -7,22 +10,15 @@ def get_nan(numerator):
     return INF if numerator >= 0 else NINF
 
 
-class Point:
-    __slots__ = 'x', 'y'
-
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+class Point(BaseModel):
+    x: float
+    y: float
 
 
 class Waypoint(Point):
-    __slots__ = 'x', 'y', 'index', 'next_waypoint', 'prev_waypoint'
-
-    def __init__(self, x, y, index, prev_waypoint):
-        super().__init__(x, y)
-        self.index = index
-        self.next_waypoint = None
-        self.prev_waypoint = prev_waypoint
+    index: int
+    prev_waypoint: Optional['Waypoint']
+    next_waypoint: Optional['Waypoint']
 
     def set_prev_waypoint(self, waypoint):
         self.prev_waypoint = waypoint
@@ -78,11 +74,11 @@ class LinearFunction:
 
     def get_closest_point_on_line(self, x, y):
         if not math.isfinite(self.slope) or not math.isfinite(self.A) or not math.isfinite(self.C) or not math.isfinite(self.intercept):
-            return Point(self.ref_point.x, y)
+            return Point(x=self.ref_point.x, y=y)
         else:
             x = (self.B * (self.B * x - self.A * y) - self.A * self.C) / (self.A ** 2 + self.B ** 2)
             y = (self.A * (-self.B * x + self.A * y) - self.B * self.C) / (self.A ** 2 + self.B ** 2)
-            return Point(x, y)
+            return Point(x=x, y=y)
 
     @staticmethod
     def get_slope_intercept(x1, y1, m):
@@ -92,10 +88,10 @@ class LinearFunction:
     def from_points(cls, x1, y1, x2, y2):
         slope = (y2 - y1) / (x2 - x1) if x2 != x1 else get_nan(y2 - y1)
         intercept = y1 - slope * x1
-        return cls(slope, intercept, Point(x1, y1))
+        return cls(slope, intercept, Point(x=x1, y=y1))
 
     @classmethod
     def get_perp_func(cls, x1, y1, slope):
         perp_slope = -1 / slope if slope != 0 else -slope
         perp_intercept = cls.get_slope_intercept(x1, y1, perp_slope)
-        return cls(perp_slope, perp_intercept, Point(x1, y1))
+        return cls(perp_slope, perp_intercept, Point(x=x1, y=y1))

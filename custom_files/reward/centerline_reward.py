@@ -1,18 +1,14 @@
 import math
-import sys
-print(sys.version)
-print(sys.version_info)
-print(sys.executable)
-print('ARGV')
-print(sys.argv)
+
 from pydantic import BaseModel
 
+from .models import DistanceFromCenter, TrackWidth
 from .reward_utils import SubReward
 
 
-class CenterlineReward(BaseModel):
-    distance_from_center: float
-    track_width: float
+class CenterlineRewardProcessor(BaseModel):
+    distance_from_center: DistanceFromCenter
+    track_width: TrackWidth
 
     @property
     def exp_reward(self):

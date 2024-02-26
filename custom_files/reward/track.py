@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 
 from .constants import SEGMENT_ANGLE_THRESHOLD
 from .geometry import LinearWaypointSegment, Waypoint
@@ -12,19 +13,22 @@ class TrackWaypoints:
         self.waypoints_map = {}
 
     def create_waypoints(self, waypoints):
+        prev_waypoint: Optional[Waypoint] = None
+
         for i, wp in enumerate(waypoints):
-            prev_waypoint = self.waypoints[-1] if self.waypoints else None
-            waypoint = Waypoint(wp[0], wp[1], i, prev_waypoint)
+            waypoint = Waypoint(x=wp[0], y=wp[1], index=i, prev_waypoint=prev_waypoint, next_waypoint=None)
 
             if prev_waypoint:
                 prev_waypoint.set_next_waypoint(waypoint)
 
             self.waypoints.append(waypoint)
             self.waypoints_map[i] = waypoint
-        first_waypoint = self.waypoints[0]
-        last_waypoint = self.waypoints[-1]
-        last_waypoint.set_next_waypoint(first_waypoint)
-        first_waypoint.set_prev_waypoint(last_waypoint)
+            prev_waypoint = waypoint
+
+        last_wp = prev_waypoint
+        first_wp = self.waypoints[0]
+        last_wp.set_next_waypoint(first_wp)
+        first_wp.set_prev_waypoint(last_wp)
 
 
 class TrackSegments:

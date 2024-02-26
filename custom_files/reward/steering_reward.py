@@ -7,7 +7,7 @@ from .reward_utils import SubReward
 from .track import TrackSegments
 
 
-class SteeringReward(BaseModel):
+class SteeringRewardProcessor(BaseModel):
     steering_angle: float
     heading360: float
     closest_ahead_waypoint_index: int

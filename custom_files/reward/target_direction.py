@@ -33,7 +33,7 @@ class TargetProcessor(BaseModel):
         segment = LinearFunction.from_points(start_x, start_y, end_x, end_y)
         perp_waypoint_func = LinearFunction.get_perp_func(end_x, end_y, segment.slope)
         target_point = perp_waypoint_func.get_closest_point_on_line(self.location.x, self.location.y)
-        end_point = Point(target_point.x, target_point.y)
+        end_point = Point(x=target_point.x, y=target_point.y)
         target_line = LineSegment(self.location, end_point)
 
         return TargetData(target_point=target_point, target_line=target_line)

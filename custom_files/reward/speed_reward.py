@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from .constants import MAX_SPEED_DIFF
 
 
-class SpeedReward(BaseModel):
+class SpeedRewardProcessor(BaseModel):
     speed: float
     curve_factor: float
     steering_reward: float
@@ -21,8 +21,8 @@ class SpeedReward(BaseModel):
         speed_diff_factor = abs(self.speed - target_speed) / MAX_SPEED_DIFF
         reward = math.exp(-speed_diff_factor)
         # noinspection PyChainedComparisons
-        if self.speed == target_speed:
-            return reward
+        if self.speed == target_speed or (target_speed == self.max_speed and self.speed > target_speed) or (target_speed == self.min_speed and self.speed < target_speed):
+            return 1
         elif self.prev_speed:
             if target_speed > self.speed:
                 if self.prev_speed < self.speed:
