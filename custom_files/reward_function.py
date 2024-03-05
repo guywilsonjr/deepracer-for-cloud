@@ -19,10 +19,15 @@ track_waypoints = TrackWaypoints()
 class RunState:
 
     def __init__(self, params, prev_run_states):
+        self.failure = False
         prev_run_state = prev_run_states[-1]
         self.prev_run_state = prev_run_state
         self.params = Params(**params)
-        self.target_processor = TargetProcessor(track_waypoints=track_waypoints, location=self.params.location)
+        self.target_processor = TargetProcessor(
+            track_waypoints=track_waypoints,
+            location=self.params.location,
+            closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index
+        )
         self.curve_processor = CurveProcessor(
             x=self.params.x,
             y=self.params.y,
@@ -49,16 +54,19 @@ class RunState:
         self.speed_rew = SpeedRewardProcessor(
             speed=self.params.speed,
             curve_factor=self.curve_processor.curve_factor,
-            steering_reward=self.steering_rew.reward,
-            max_speed=self.params.model_metadata.max_speed,
-            min_speed=self.params.model_metadata.min_speed,
+            steering_reward=self.steering_rew.reward.reward,
+            max_speed=self.params.metadata.max_speed,
+            min_speed=self.params.metadata.min_speed,
             prev_speed=self.prev_run_state.params.speed if self.prev_run_state else None
         )
 
     @property
     def reward(self):
-        reward = self.speed_rew.reward * self.params.progress_percentage * (self.centerline_rew.reward + self.heading_rew.reward + self.steering_rew.reward) / 3
-        if self.params.all_wheels_on_track and not self.params.is_crashed and not self.params.is_offtrack and not self.params.is_reversed:
+        if self.failure:
+            return MIN_REWARD
+        if self.params.all_wheels_on_track and not self.params.is_reversed:
+            reward = self.speed_rew.reward * self.params.progress_percentage * (self.centerline_rew.reward.reward + self.heading_rew.reward + self.steering_rew.reward.reward) / 3
+
             return max(reward, MIN_REWARD)
         else:
             return MIN_REWARD
@@ -94,8 +102,11 @@ class Simulation:
 
         steps = params['steps']
         params['sim_time'] = sim_time
+        params['metadata'] = params['model_metadata']
+        del params['model_metadata']
         run_state = RunState(params, self.run_states)
         self.run_states.append(run_state)
+        self.timer.record_time(steps)
         print(run_state.reward_data)
         return run_state
 

@@ -34,5 +34,5 @@ class SteeringRewardProcessor(BaseModel):
     @property
     def reward(self):
         # We want to reward for both being on target and for requiring a small steering angle
-        steering_reward = self.abs_steering_reward * self.target_steering_reward
-        return SubReward(steering_reward).root
+        steering_reward = self.abs_steering_reward
+        return SubReward(reward=1)

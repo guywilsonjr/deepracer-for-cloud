@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from .constants import WAYPOINT_LOOKAHEAD_DISTANCE
 from .geometry import LinearFunction, LineSegment, Point
+from .models import Index
 from .track import TrackWaypoints
 
 
@@ -16,6 +17,7 @@ class TargetData(BaseModel):
 class TargetProcessor(BaseModel):
     track_waypoints: TrackWaypoints
     location: Point
+    closest_ahead_waypoint_index: Index
 
     class Config:
         arbitrary_types_allowed = True

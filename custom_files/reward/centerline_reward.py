@@ -14,13 +14,13 @@ class CenterlineRewardProcessor(BaseModel):
     def exp_reward(self):
         distance_factor = 2 * self.distance_from_center / self.track_width
         mod_distance_factor = max(min(1.0, distance_factor), 0.5)
-        return SubReward(math.exp(-mod_distance_factor)).root
+        return SubReward(reward=math.exp(-mod_distance_factor))
 
     @property
     def linear_reward(self):
         distance_factor = 2 * self.distance_from_center / self.track_width
         mod_distance_factor = max(min(1.0, distance_factor), 0.5)
-        return SubReward(2 * (1 - mod_distance_factor)).root
+        return SubReward(reward=2 * (1 - mod_distance_factor))
 
     @property
     def reward(self):

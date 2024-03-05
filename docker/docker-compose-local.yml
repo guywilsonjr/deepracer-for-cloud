@@ -16,6 +16,9 @@ services:
     environment:
       - MINIO_ROOT_USER=${DR_LOCAL_ACCESS_KEY_ID}
       - MINIO_ROOT_PASSWORD=${DR_LOCAL_SECRET_ACCESS_KEY}
+      - MINIO_KMS_KES_KEY_FILE=root.key
+      - MINIO_KMS_KES_CERT_FILE=root.cert
+      - MINIO_KMS_KES_KEY_NAME=my-minio-sse-kms-key
       - MINIO_UID
       - MINIO_GID
       - MINIO_USERNAME

@@ -23,7 +23,7 @@ except:
     print("Multiple workers not detected, assuming 1 worker")
 
 au.analyze_training_progress(simulation_agg, title='Training progress')
-track_name = 'caecer_loop'
+track_name = 'caecer_gp'
 tu = TrackIO()
 track: Track = tu.load_track(track_name)
 pu.plot_track(df, track)

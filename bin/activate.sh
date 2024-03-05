@@ -167,6 +167,9 @@ if [[ -n "${DR_MINIO_COMPOSE_FILE}" ]]; then
   export MINIO_USERNAME=$(id -u -n)
   export MINIO_GID=$(id -g)
   export MINIO_GROUPNAME=$(id -g -n)
+  export MINIO_KMS_KES_KEY_FILE=root.key
+  export MINIO_KMS_KES_CERT_FILE=root.cert
+  export MINIO_KMS_KES_KEY_NAME=my-minio-sse-kms-key
   if [[ "${DR_DOCKER_STYLE,,}" == "swarm" ]]; then
     docker stack deploy $DR_MINIO_COMPOSE_FILE s3
   else
