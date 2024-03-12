@@ -1,8 +1,12 @@
+import json
+import uuid
+
 import rospy
 
 from .reward.centerline_reward import CenterlineRewardProcessor
 from .reward.constants import MIN_REWARD
 from .reward.curveprocessor import CurveProcessor
+from .reward.emitter import Emitter
 from .reward.heading_reward import HeadingRewardProcessor
 from .reward.params import Params
 from .reward.speed_reward import SpeedRewardProcessor
@@ -31,8 +35,8 @@ class RunState:
         self.curve_processor = CurveProcessor(
             x=self.params.x,
             y=self.params.y,
-            heading360=self.params.heading360,
-            track_segments=track_segments,
+            track_waypoints=track_waypoints,
+            closest_behind_waypoint_index=self.params.closest_behind_waypoint_index,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index,
             track_width=self.params.track_width
         )
@@ -41,7 +45,7 @@ class RunState:
             steering_angle=self.params.steering_angle,
             heading360=self.params.heading360,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index,
-            curve_factor=self.curve_processor.curve_factor,
+            curve_factors=self.curve_processor.curve_factors,
             track_segments=track_segments
         )
         self.heading_rew = HeadingRewardProcessor(
@@ -53,7 +57,7 @@ class RunState:
         )
         self.speed_rew = SpeedRewardProcessor(
             speed=self.params.speed,
-            curve_factor=self.curve_processor.curve_factor,
+            curve_factors=self.curve_processor.curve_factors,
             steering_reward=self.steering_rew.reward.reward,
             max_speed=self.params.metadata.max_speed,
             min_speed=self.params.metadata.min_speed,
@@ -65,6 +69,7 @@ class RunState:
         if self.failure:
             return MIN_REWARD
         if self.params.all_wheels_on_track and not self.params.is_reversed:
+            return self.centerline_rew.reward.reward
             reward = self.speed_rew.reward * self.params.progress_percentage * (self.centerline_rew.reward.reward + self.heading_rew.reward + self.steering_rew.reward.reward) / 3
 
             return max(reward, MIN_REWARD)
@@ -87,18 +92,41 @@ class RunState:
 
 
 class Simulation:
-    __slots__ = 'sim_state_initialized', 'run_states', 'timer'
+    __slots__ = 'sim_state_initialized', 'run_states', 'timer', 'emitter', 'run_id'
 
     def __init__(self):
         self.sim_state_initialized = False
         self.run_states = [None]
         self.timer = Timer()
+        self.emitter = Emitter()
+        self.run_id = uuid.uuid4().hex
+
+    def initialize(self, params):
+        track_waypoints.create_waypoints(params['waypoints'])
+        track_segments.create_segments(track_waypoints.waypoints)
+        self.publish_initialization(params)
+        self.sim_state_initialized = True
+
+    def publish_initialization(self, params):
+        pub_data = {
+            'run_id': self.run_id,
+            'waypoints': params['waypoints'],
+            'track_width': params['track_width'],
+            'track_length': params['track_length']
+        }
+        self.emitter.emit(json.dumps(pub_data))
+
+    def publish_data(self):
+        rs = self.run_states[-1].params.model_dump()
+        del rs['waypoints']
+        rs['run_id'] = self.run_id
+        msg = json.dumps(rs)
+        self.emitter.emit(msg)
+
 
     def add_run_state(self, params, sim_time):
         if not self.sim_state_initialized:
-            track_waypoints.create_waypoints(params['waypoints'])
-            track_segments.create_segments(track_waypoints.waypoints)
-            self.sim_state_initialized = True
+            self.initialize(params)
 
         steps = params['steps']
         params['sim_time'] = sim_time
@@ -106,6 +134,7 @@ class Simulation:
         del params['model_metadata']
         run_state = RunState(params, self.run_states)
         self.run_states.append(run_state)
+        self.publish_data()
         self.timer.record_time(steps)
         print(run_state.reward_data)
         return run_state

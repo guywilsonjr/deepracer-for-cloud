@@ -1,7 +1,7 @@
 import math
 from typing import Optional
 
-from .constants import SEGMENT_ANGLE_THRESHOLD
+from .constants import STRAIGHT_ANGLE_THRESHOLD
 from .geometry import LinearWaypointSegment, Waypoint
 
 
@@ -29,6 +29,7 @@ class TrackWaypoints:
         first_wp = self.waypoints[0]
         last_wp.set_next_waypoint(first_wp)
         first_wp.set_prev_waypoint(last_wp)
+        self.waypoints = tuple(self.waypoints)
 
 
 class TrackSegments:
@@ -40,9 +41,10 @@ class TrackSegments:
     def add_waypoint_segment(self, start, end):
         radians = math.atan2(end.y - start.y, end.x - start.x)
         angle = math.degrees(radians)
+        angle = (angle + 360) % 360
         prev_segment = self.segments[-1] if self.segments else None
 
-        if prev_segment and abs(prev_segment.angle - angle) < SEGMENT_ANGLE_THRESHOLD:
+        if prev_segment and abs(prev_segment.angle - angle) < STRAIGHT_ANGLE_THRESHOLD:
             prev_segment.add_waypoint(end)
         else:
             segment = LinearWaypointSegment(start, end, prev_segment)
@@ -60,6 +62,7 @@ class TrackSegments:
         last_segment = self.segments[-1]
         last_segment.set_next_segment(first_segment)
         first_segment.set_prev_segment(last_segment)
+        self.segments = tuple(self.segments)
 
     def get_closest_segment(self, closest_ahead_waypoint_index):
         for segment in self.segments:

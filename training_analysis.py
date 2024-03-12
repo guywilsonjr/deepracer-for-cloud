@@ -6,7 +6,7 @@ from deepracer.tracks import Track, TrackIO
 
 
 warnings.filterwarnings('ignore')
-PREFIX='rl-deepracer-sagemaker-91'   # Name of the model, without trailing '/'
+PREFIX='rl-deepracer-sagemaker-95'   # Name of the model, without trailing '/'
 BUCKET='bucket'       # Bucket name is default 'bucket' when training locally
 PROFILE='minio'          # The credentials profile in .aws - 'minio' for local training
 S3_ENDPOINT_URL='http://minio:9000'

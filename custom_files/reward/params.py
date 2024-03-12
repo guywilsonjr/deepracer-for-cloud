@@ -37,6 +37,7 @@ class Params(CoreParams):
     track_width: TrackWidth
     waypoints: List[List[float]]
     closest_ahead_waypoint_index: Index
+    closest_behind_waypoint_index: Index
     heading360: Heading360
     location: Point
     progress_percentage: float
@@ -51,6 +52,7 @@ class Params(CoreParams):
     def populate_fields(cls, data):
         heading = data['heading']
         data['closest_ahead_waypoint_index'] = data['closest_waypoints'][1]
+        data['closest_behind_waypoint_index'] = data['closest_waypoints'][0]
         data['heading360'] = heading if heading >= 0.0 else 360.0 + heading
         data['location'] = Point(x=data['x'], y=data['y'])
         data['progress_percentage'] = max(0, data['progress'] * 0.01)

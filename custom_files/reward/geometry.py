@@ -37,6 +37,7 @@ class LineSegment:
         self.slope = numerator / (self.end.x - self.start.x) if self.end.x != self.start.x else get_nan(numerator)
         radians = math.atan2(self.end.y - self.start.y, self.end.x - self.start.x)
         self.angle = math.degrees(radians)
+        self.angle = (self.angle + 360) % 360
         self.length = math.sqrt((self.end.x - self.start.x) ** 2 + (self.end.y - self.start.y) ** 2)
 
 

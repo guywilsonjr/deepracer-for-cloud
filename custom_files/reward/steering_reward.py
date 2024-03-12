@@ -11,14 +11,16 @@ class SteeringRewardProcessor(BaseModel):
     steering_angle: float
     heading360: float
     closest_ahead_waypoint_index: int
-    curve_factor: float
+    curve_factors: dict
     track_segments: TrackSegments
+
     class Config:
         arbitrary_types_allowed = True
 
     @property
     def abs_steering_reward(self):
-        return math.cos(math.radians(self.steering_angle) * self.curve_factor)
+        # TODO: Consider curve factor
+        return math.cos(math.radians(self.steering_angle))
 
     @property
     def target_steering_reward(self):

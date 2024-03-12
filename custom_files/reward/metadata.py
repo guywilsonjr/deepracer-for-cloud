@@ -51,6 +51,7 @@ def action_space_discriminator(action_space):
     else:
         raise ValueError(f'Unknown action space type: {type(action_space)}')
 
+
 class ModelMetadata(BaseModel):
     sensor: List[str]
     neural_network: str

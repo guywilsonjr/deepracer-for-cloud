@@ -8,7 +8,7 @@ from .constants import MAX_SPEED_DIFF
 
 class SpeedRewardProcessor(BaseModel):
     speed: float
-    curve_factor: float
+    curve_factors: dict
     steering_reward: float
     max_speed: float
     min_speed: float
@@ -16,7 +16,10 @@ class SpeedRewardProcessor(BaseModel):
 
     @property
     def exp_reward(self):
-        curve_param = self.curve_factor * self.steering_reward
+        if 'CURVE_ENTER' in self.curve_factors:
+            curve_param = 0.5
+        else:
+            curve_param = 1
         target_speed = self.min_speed + (self.max_speed - self.min_speed) * curve_param
         speed_diff_factor = abs(self.speed - target_speed) / MAX_SPEED_DIFF
         reward = math.exp(-speed_diff_factor)

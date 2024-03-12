@@ -10,4 +10,5 @@ class SubReward(BaseModel):
     def model_validator(self):
         self.reward = max(self.reward, MIN_REWARD)
 
+FinalReward = confloat(ge=-1e5, le=1e5)
 
