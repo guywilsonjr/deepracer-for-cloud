@@ -19,6 +19,7 @@ class SpeedRewardProcessor(BaseModel):
     def exp_reward(self):
         if 'CURVE_ENTER' in self.curve_factors:
             curve_param = 0
+            # curve_param = self.curve_factors['CURVE_ENTER'] / CURVE_ANGLE_THRESHOLD
         else:
             curve_param = 1
         target_speed = self.min_speed + (self.max_speed - self.min_speed) * curve_param
