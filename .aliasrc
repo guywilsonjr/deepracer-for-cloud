@@ -1,1 +1,2 @@
 source bin/activate.sh
+alias restart-viewer='dr-stop-viewer && dr-start-viewer'

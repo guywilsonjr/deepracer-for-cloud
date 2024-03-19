@@ -1,5 +1,6 @@
 import json
 import uuid
+from pprint import pprint
 
 import rospy
 
@@ -8,6 +9,7 @@ from .reward.constants import MIN_REWARD
 from .reward.curveprocessor import CurveProcessor
 from .reward.emitter import Emitter
 from .reward.heading_reward import HeadingRewardProcessor
+from .reward.history_processor import HistoryProcessor
 from .reward.params import Params
 from .reward.speed_reward import SpeedRewardProcessor
 from .reward.steering_reward import SteeringRewardProcessor
@@ -23,10 +25,10 @@ track_waypoints = TrackWaypoints()
 class RunState:
 
     def __init__(self, params, prev_run_states):
-        self.failure = False
         prev_run_state = prev_run_states[-1]
         self.prev_run_state = prev_run_state
-        self.params = Params(**params)
+        self.params = Params.get_params(params)
+        self.history_processor = HistoryProcessor.process_history(self.params, prev_run_states)
         self.target_processor = TargetProcessor(
             track_waypoints=track_waypoints,
             location=self.params.location,
@@ -61,17 +63,13 @@ class RunState:
             steering_reward=self.steering_rew.reward.reward,
             max_speed=self.params.metadata.max_speed,
             min_speed=self.params.metadata.min_speed,
-            prev_speed=self.prev_run_state.params.speed if self.prev_run_state else None
+            prev_speed=self.history_processor.prev_speed
         )
 
     @property
     def reward(self):
-        if self.failure:
-            return MIN_REWARD
-        if self.params.all_wheels_on_track and not self.params.is_reversed:
-            return self.centerline_rew.reward.reward
-            reward = self.speed_rew.reward * self.params.progress_percentage * (self.centerline_rew.reward.reward + self.heading_rew.reward + self.steering_rew.reward.reward) / 3
-
+        if not self.params.is_crashed and not self.params.is_offtrack and not self.params.is_reversed:
+            reward = (self.speed_rew.reward.asfloat + self.centerline_rew.reward.asfloat + self.heading_rew.reward.asfloat) / 3
             return max(reward, MIN_REWARD)
         else:
             return MIN_REWARD
@@ -80,14 +78,14 @@ class RunState:
     def reward_data(self):
         return {
             'reward': self.reward,
-            'steps': self.params.steps,
-            'progress': self.params.progress_percentage,
-            'curve_factor': self.curve_processor.curve_factor,
             'waypoint_heading_reward': self.heading_rew.reward,
-            'steering_reward': self.steering_rew.reward,
+            'heading360': self.params.heading360,
+            'speed': self.params.speed,
             'speed_reward': self.speed_rew.reward,
-            'progress_reward': self.params.progress_percentage,
             'center_line_reward': self.centerline_rew.reward,
+            'distance_from_center': self.params.distance_from_center,
+            'progress': self.params.progress_percentage,
+            'steps': self.params.steps,
         }
 
 
@@ -102,7 +100,7 @@ class Simulation:
         self.run_id = uuid.uuid4().hex
 
     def initialize(self, params):
-        track_waypoints.create_waypoints(params['waypoints'])
+        track_waypoints.create_waypoints(params['waypoints'], params['track_width'])
         track_segments.create_segments(track_waypoints.waypoints)
         self.publish_initialization(params)
         self.sim_state_initialized = True
@@ -136,7 +134,7 @@ class Simulation:
         self.run_states.append(run_state)
         self.publish_data()
         self.timer.record_time(steps)
-        print(run_state.reward_data)
+        pprint(run_state.reward_data)
         return run_state
 
 

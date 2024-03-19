@@ -1,6 +1,8 @@
 from typing import List, Tuple
 
-from pydantic import confloat, conint
+from pydantic import confloat, conint, model_validator, RootModel
+
+from .constants import MIN_REWARD
 
 
 DistanceFromCenter = confloat(ge=0)
@@ -18,4 +20,15 @@ Heading = confloat(ge=-180, le=180)
 Heading360 = confloat(ge=0, le=360)
 Percentage = confloat(ge=0, le=1)
 Distance = confloat(ge=0)
+
+class Reward(RootModel[confloat(ge=0, le=1)]):
+    @model_validator(mode='after')
+    def validator(self):
+        self.root = max(self.root, MIN_REWARD)
+        return self
+
+    @property
+    def asfloat(self):
+        return self.root
+
 

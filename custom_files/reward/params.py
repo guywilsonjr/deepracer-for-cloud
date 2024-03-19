@@ -1,10 +1,10 @@
 
 from typing import List
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 from .constants import MAX_SPEED
-from .geometry import Point
+from .geometry import TrackPoint
 from .metadata import ModelMetadata
 from .models import Distance, Heading, Heading360, Index, Percentage, Speed, SteeringAngle, Steps, TrackLength, TrackWidth
 
@@ -39,26 +39,24 @@ class Params(CoreParams):
     closest_ahead_waypoint_index: Index
     closest_behind_waypoint_index: Index
     heading360: Heading360
-    location: Point
+    location: TrackPoint
     progress_percentage: float
     speed_ratio: Percentage
 
     metadata: ModelMetadata
     sim_time: float
 
-    # noinspection PyNestedDecorators,PyUnusedFunction
-    @model_validator(mode='before')
     @classmethod
-    def populate_fields(cls, data):
+    def get_params(cls, data):
         heading = data['heading']
         data['closest_ahead_waypoint_index'] = data['closest_waypoints'][1]
         data['closest_behind_waypoint_index'] = data['closest_waypoints'][0]
         data['heading360'] = heading if heading >= 0.0 else 360.0 + heading
-        data['location'] = Point(x=data['x'], y=data['y'])
+        data['location'] = TrackPoint(x=data['x'], y=data['y'])
         data['progress_percentage'] = max(0, data['progress'] * 0.01)
         data['progress'] = max(0, data['progress'])
         data['speed_ratio'] = data['speed'] / MAX_SPEED
-        return data
+        return cls(**data)
 
 
 

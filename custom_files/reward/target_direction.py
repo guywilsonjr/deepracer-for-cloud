@@ -1,13 +1,17 @@
 from pydantic import BaseModel
+import shapely
+print(shapely.__version__)
+import shapely.ops
+from shapely import LineString
 
 from .constants import WAYPOINT_LOOKAHEAD_DISTANCE
-from .geometry import LinearFunction, LineSegment, Point
+from .geometry import LineSegment, TrackPoint
 from .models import Index
 from .track import TrackWaypoints
 
 
 class TargetData(BaseModel):
-    target_point: Point
+    target_point: TrackPoint
     target_line: LineSegment
 
     class Config:
@@ -16,7 +20,7 @@ class TargetData(BaseModel):
 
 class TargetProcessor(BaseModel):
     track_waypoints: TrackWaypoints
-    location: Point
+    location: TrackPoint
     closest_ahead_waypoint_index: Index
 
     class Config:
@@ -32,10 +36,15 @@ class TargetProcessor(BaseModel):
             next_wp = next_wp.next_waypoint
             end_x, end_y = next_wp.x, next_wp.y
 
-        segment = LinearFunction.from_points(start_x, start_y, end_x, end_y)
-        perp_waypoint_func = LinearFunction.get_perp_func(end_x, end_y, segment.slope)
-        target_point = perp_waypoint_func.get_closest_point_on_line(self.location.x, self.location.y)
-        end_point = Point(x=target_point.x, y=target_point.y)
-        target_line = LineSegment(self.location, end_point)
+        tpls = LineString([(start_x, start_y), (end_x, end_y)])
+        loc_point = shapely.Point(self.location.x, self.location.y)
+        cp_0, cp_1 = shapely.ops.nearest_points(tpls, loc_point)
+        if loc_point.almost_equals(cp_0):
+            target_point = TrackPoint(x=cp_1.x, y=cp_1.y)
+        elif loc_point.almost_equals(cp_1):
+            target_point = TrackPoint(x=cp_0.x, y=cp_0.y)
+        else:
+            raise ValueError("No closest point found on line")
 
+        target_line = LineSegment(self.location, target_point)
         return TargetData(target_point=target_point, target_line=target_line)

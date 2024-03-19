@@ -1,18 +1,21 @@
 import math
 from typing import Optional
 
+from shapely import LinearRing
+
 from .constants import STRAIGHT_ANGLE_THRESHOLD
 from .geometry import LinearWaypointSegment, Waypoint
 
 
 class TrackWaypoints:
-    __slots__ = 'waypoints', 'waypoints_map'
+    __slots__ = 'waypoints', 'waypoints_map', 'center_ring', 'track_geometry', 'outer_ring', 'inner_ring'
 
     def __init__(self):
+        self.center_ring = self.track_geometry = self.outer_ring = self.inner_ring = None
         self.waypoints = []
         self.waypoints_map = {}
 
-    def create_waypoints(self, waypoints):
+    def create_waypoints(self, waypoints, track_width):
         prev_waypoint: Optional[Waypoint] = None
 
         for i, wp in enumerate(waypoints):
@@ -30,6 +33,10 @@ class TrackWaypoints:
         last_wp.set_next_waypoint(first_wp)
         first_wp.set_prev_waypoint(last_wp)
         self.waypoints = tuple(self.waypoints)
+        self.center_ring = LinearRing(waypoints)
+        self.track_geometry = self.center_ring.buffer(track_width / 2)
+        self.outer_ring = self.track_geometry.exterior
+        self.inner_ring = self.track_geometry.interiors[0]
 
 
 class TrackSegments:

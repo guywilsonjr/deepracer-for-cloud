@@ -9,7 +9,7 @@ class Timer:
 
     def __init__(self):
         self.track_time = True
-        TIME_WINDOW = 10
+        TIME_WINDOW = 2
         self.time = numpy.zeros([TIME_WINDOW, 2])
         self.total_frames = 0
         self.fps = 15
