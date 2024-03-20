@@ -1,5 +1,5 @@
 import math
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -14,6 +14,7 @@ class SpeedRewardProcessor(BaseModel):
     max_speed: float
     min_speed: float
     prev_speed: Optional[float]
+    curve_metrics: List[Dict[str, float]]
 
     @property
     def exp_reward(self):

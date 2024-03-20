@@ -15,10 +15,10 @@ class TrackPoint(BaseModel):
     y: float
 
 
-class Waypoint(TrackPoint):
+class TrackWaypoint(TrackPoint):
     index: int
-    prev_waypoint: Optional['Waypoint']
-    next_waypoint: Optional['Waypoint']
+    prev_waypoint: Optional['TrackWaypoint']
+    next_waypoint: Optional['TrackWaypoint']
 
     def set_prev_waypoint(self, waypoint):
         self.prev_waypoint = waypoint

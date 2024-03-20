@@ -4,7 +4,7 @@ from typing import Optional
 from shapely import LinearRing
 
 from .constants import STRAIGHT_ANGLE_THRESHOLD
-from .geometry import LinearWaypointSegment, Waypoint
+from .geometry import LinearWaypointSegment, TrackWaypoint
 
 
 class TrackWaypoints:
@@ -16,10 +16,10 @@ class TrackWaypoints:
         self.waypoints_map = {}
 
     def create_waypoints(self, waypoints, track_width):
-        prev_waypoint: Optional[Waypoint] = None
+        prev_waypoint: Optional[TrackWaypoint] = None
 
         for i, wp in enumerate(waypoints):
-            waypoint = Waypoint(x=wp[0], y=wp[1], index=i, prev_waypoint=prev_waypoint, next_waypoint=None)
+            waypoint = TrackWaypoint(x=wp[0], y=wp[1], index=i, prev_waypoint=prev_waypoint, next_waypoint=None)
 
             if prev_waypoint:
                 prev_waypoint.set_next_waypoint(waypoint)

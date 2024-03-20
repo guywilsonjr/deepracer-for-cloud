@@ -3,14 +3,14 @@ import math
 from pydantic import BaseModel
 
 from .constants import CURVE_ANGLE_THRESHOLD, LOOKAHEAD_TRACK_WIDTH_FACTOR, STRAIGHT_ANGLE_THRESHOLD
+from .geometry import TrackWaypoint
 from .models import Index, TrackWidth
 from .track import TrackWaypoints
 
 
 class CurveProcessor(BaseModel):
-    track_waypoints: TrackWaypoints
-    closest_ahead_waypoint_index: Index
-    closest_behind_waypoint_index: Index
+    prev_wp: TrackWaypoint
+    next_wp: TrackWaypoint
     track_width: TrackWidth
     x: float
     y: float
@@ -44,15 +44,12 @@ class CurveProcessor(BaseModel):
 
     @property
     def new_curve_factor(self):
-        prev_wp = self.track_waypoints.waypoints[self.closest_behind_waypoint_index]
-        next_wp = self.track_waypoints.waypoints[self.closest_ahead_waypoint_index]
-
-        lookbehind_length = math.sqrt((prev_wp.x - self.x) ** 2 + (prev_wp.y - self.y) ** 2)
-        lookahead_length = math.sqrt((next_wp.x - self.x) ** 2 + (next_wp.y - self.y) ** 2)
-        look_behind_start = prev_wp
-        look_ahead_start = next_wp
-        look_behind_end = prev_wp.prev_waypoint
-        look_ahead_end = next_wp.next_waypoint
+        lookbehind_length = math.sqrt((self.prev_wp.x - self.x) ** 2 + (self.prev_wp.y - self.y) ** 2)
+        lookahead_length = math.sqrt((self.next_wp.x - self.x) ** 2 + (self.next_wp.y - self.y) ** 2)
+        look_behind_start = self.prev_wp
+        look_ahead_start = self.next_wp
+        look_behind_end = self.prev_wp.prev_waypoint
+        look_ahead_end = self.next_wp.next_waypoint
 
         start_lookahead_angle = math.degrees(math.atan2(look_ahead_end.y - look_ahead_start.y, look_ahead_end.x - look_ahead_start.x))
         start_lookbehind_angle = math.degrees(math.atan2(look_behind_start.y - look_behind_end.y, look_behind_start.x - look_behind_end.x))

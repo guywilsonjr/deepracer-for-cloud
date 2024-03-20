@@ -30,7 +30,7 @@ track_length = init_json_msg_json['track_length']
 wps = init_json_msg_json['waypoints']
 track_waypoints = TrackWaypoints()
 track_segments = TrackSegments()
-track_waypoints.create_waypoints(wps)
+track_waypoints.create_waypoints(wps, 0.225*4)
 track_segments.create_segments(track_waypoints.waypoints)
 NUM_GEN_POINTS = 4
 print('Found waypoints:', len(wps))
@@ -57,13 +57,13 @@ def generate_points_along_line(line, cwbi, cawpi):
     attached_angle = (attached_angle + 360) % 360
     return [TestPoint(x, y, cwbi, cawpi, attached_angle) for x, y in xy_data]
 
+
 def generate_curve_processor(tp: TestPoint):
     cp = CurveProcessor(
         x=tp.x,
         y=tp.y,
-        track_waypoints=track_waypoints,
-        closest_ahead_waypoint_index=tp.closest_ahead_waypoint_index,
-        closest_behind_waypoint_index=tp.closest_behind_waypoint_index,
+        prev_wp=track_waypoints.waypoints[tp.closest_ahead_waypoint_index],
+        next_wp=track_waypoints.waypoints[tp.closest_behind_waypoint_index],
         track_width=track_width
     )
     return cp.curve_factors

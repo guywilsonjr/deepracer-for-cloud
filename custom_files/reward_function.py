@@ -24,7 +24,7 @@ track_waypoints = TrackWaypoints()
 
 class RunState:
 
-    def __init__(self, params, prev_run_states):
+    def __init__(self, params, prev_run_states, curve_metrics):
         prev_run_state = prev_run_states[-1]
         self.prev_run_state = prev_run_state
         self.params = Params.get_params(params)
@@ -37,9 +37,8 @@ class RunState:
         self.curve_processor = CurveProcessor(
             x=self.params.x,
             y=self.params.y,
-            track_waypoints=track_waypoints,
-            closest_behind_waypoint_index=self.params.closest_behind_waypoint_index,
-            closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index,
+            prev_wp=track_waypoints.waypoints[self.params.closest_behind_waypoint_index],
+            next_wp=track_waypoints.waypoints[self.params.closest_ahead_waypoint_index],
             track_width=self.params.track_width
         )
         self.centerline_rew = CenterlineRewardProcessor(distance_from_center=self.params.distance_from_center, track_width=self.params.track_width)
@@ -55,7 +54,9 @@ class RunState:
             location=self.params.location,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index,
             heading360=self.params.heading360,
-            target_data=self.target_processor.target_data
+            target_data=self.target_processor.target_data,
+            velocity=self.history_processor.velocity,
+            max_speed=self.params.metadata.max_speed
         )
         self.speed_rew = SpeedRewardProcessor(
             speed=self.params.speed,
@@ -63,7 +64,8 @@ class RunState:
             steering_reward=self.steering_rew.reward.reward,
             max_speed=self.params.metadata.max_speed,
             min_speed=self.params.metadata.min_speed,
-            prev_speed=self.history_processor.prev_speed
+            prev_speed=self.history_processor.prev_speed,
+            curve_metrics=curve_metrics
         )
 
     @property
@@ -86,11 +88,14 @@ class RunState:
             'distance_from_center': self.params.distance_from_center,
             'progress': self.params.progress_percentage,
             'steps': self.params.steps,
+            'track_width': self.params.track_width,
+            'track_length': self.params.track_length,
+            'sim_time': self.params.sim_time,
         }
 
 
 class Simulation:
-    __slots__ = 'sim_state_initialized', 'run_states', 'timer', 'emitter', 'run_id'
+    __slots__ = 'sim_state_initialized', 'run_states', 'timer', 'emitter', 'run_id', 'curve_metrics'
 
     def __init__(self):
         self.sim_state_initialized = False
@@ -98,6 +103,7 @@ class Simulation:
         self.timer = Timer()
         self.emitter = Emitter()
         self.run_id = uuid.uuid4().hex
+        self.curve_metrics = []
 
     def initialize(self, params):
         track_waypoints.create_waypoints(params['waypoints'], params['track_width'])
@@ -130,7 +136,8 @@ class Simulation:
         params['sim_time'] = sim_time
         params['metadata'] = params['model_metadata']
         del params['model_metadata']
-        run_state = RunState(params, self.run_states)
+        run_state = RunState(params, self.run_states, self.curve_metrics)
+        self.curve_metrics.append(run_state.curve_processor.curve_factors)
         self.run_states.append(run_state)
         self.publish_data()
         self.timer.record_time(steps)
