@@ -8,6 +8,7 @@ TOPIC_ARN = 'arn:aws:sns:us-west-1:936272581790:DeepRacerService-DeepRacerTopic4
 
 class Emitter:
     def __init__(self):
+        return
         self.session = boto3.Session(
             aws_access_key_id=os.environ['SNS_ACCESS_KEY_ID'],
             aws_secret_access_key=os.environ['SNS_SECRET_ACCESS_KEY']

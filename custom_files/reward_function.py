@@ -153,6 +153,7 @@ def reward_function(params):
     '''
     Example of penalize steering, which helps mitigate zig-zag behaviors
     '''
+
     tn = rospy.Time().now()
     sim_time = tn.secs + tn.nsecs * 1e-9
     params['sim_time'] = sim_time

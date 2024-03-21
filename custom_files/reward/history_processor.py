@@ -20,4 +20,4 @@ class HistoryProcessor(BaseModel):
         dt = max(params.sim_time - prev_run_state.params.sim_time, 0.01)
         dist = (dx ** 2 + dy ** 2) ** 0.5
         velocity = dist / dt
-        return cls(prev_speed=prev_speed, velocity=velocity)
+        return cls(prev_speed=prev_speed, velocity=velocity, distance_traveled=dist)

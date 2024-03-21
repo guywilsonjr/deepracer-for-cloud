@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -15,7 +16,7 @@ class HeadingRewardProcessor(BaseModel):
     closest_ahead_waypoint_index: Index
     heading360: Heading360
     target_data: TargetData
-    velocity: float
+    velocity: Optional[float]
     max_speed: float
 
     class Config:

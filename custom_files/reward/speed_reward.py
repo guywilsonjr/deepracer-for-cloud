@@ -18,12 +18,16 @@ class SpeedRewardProcessor(BaseModel):
 
     @property
     def exp_reward(self):
+        curve_param = 1
+        if 'CURVE' in self.curve_factors:
+            curve_param *= .5
         if 'CURVE_ENTER' in self.curve_factors:
-            curve_param = 0
-            # curve_param = self.curve_factors['CURVE_ENTER'] / CURVE_ANGLE_THRESHOLD
-        else:
-            curve_param = 1
+            curve_param *= .5
+        if 'CURVE_EXIT' in self.curve_factors:
+            curve_param *= 1.5
         target_speed = self.min_speed + (self.max_speed - self.min_speed) * curve_param
+        target_speed = min(target_speed, self.max_speed)
+        print(f"target_speed: {target_speed}")
         speed_diff_factor = abs(self.speed - target_speed) / MAX_SPEED_DIFF
         reward = (math.exp(-speed_diff_factor) - math.exp(-1)) / (1 - math.exp(-1))
         # noinspection PyChainedComparisons
@@ -31,23 +35,7 @@ class SpeedRewardProcessor(BaseModel):
             return 1
         return reward
 
-    '''
-        elif self.prev_speed:
-            if target_speed > self.speed:
-                if self.prev_speed < self.speed:
-                    speed_factor = 1 + speed_diff_factor
-                else:
-                    speed_factor = 1 - speed_diff_factor
-                return reward * speed_factor / 2
-            elif target_speed < self.speed:
-                if self.prev_speed > self.speed:
-                    speed_factor = 1 + speed_diff_factor
-                else:
-                    speed_factor = 1 - speed_diff_factor
-                return reward * speed_factor / 2
-        else:
-            return reward / 2
-    '''
+
 
     @property
     def reward(self):

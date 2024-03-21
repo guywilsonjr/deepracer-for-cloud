@@ -2,8 +2,7 @@ from pydantic import BaseModel
 import shapely
 print(shapely.__version__)
 import shapely.ops
-from shapely import LineString
-
+from shapely.geometry import LineString, Point
 from .constants import WAYPOINT_LOOKAHEAD_DISTANCE
 from .geometry import LineSegment, TrackPoint
 from .models import Index
@@ -35,13 +34,12 @@ class TargetProcessor(BaseModel):
             start_x, start_y = end_x, end_y
             next_wp = next_wp.next_waypoint
             end_x, end_y = next_wp.x, next_wp.y
-
         tpls = LineString([(start_x, start_y), (end_x, end_y)])
-        loc_point = shapely.Point(self.location.x, self.location.y)
+        loc_point = Point(self.location.x, self.location.y)
         cp_0, cp_1 = shapely.ops.nearest_points(tpls, loc_point)
-        if loc_point.almost_equals(cp_0):
+        if loc_point.equals_exact(cp_0, 0.0001):
             target_point = TrackPoint(x=cp_1.x, y=cp_1.y)
-        elif loc_point.almost_equals(cp_1):
+        elif loc_point.equals_exact(cp_1, 0.0001):
             target_point = TrackPoint(x=cp_0.x, y=cp_0.y)
         else:
             raise ValueError("No closest point found on line")
