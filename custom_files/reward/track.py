@@ -1,7 +1,7 @@
 import math
 from typing import Optional
 
-from shapely import LinearRing
+from shapely.geometry import LinearRing
 
 from .constants import STRAIGHT_ANGLE_THRESHOLD
 from .geometry import LinearWaypointSegment, Waypoint
