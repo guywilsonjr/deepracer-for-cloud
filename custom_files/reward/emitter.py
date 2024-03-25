@@ -17,7 +17,7 @@ class Emitter:
             aws_session_token=SNS_SESSION_TOKEN
         )
 
-        self.sns = self.session.client('sns', region_name='us-west-1')
+        self.sns = self.session.client('sns')
 
     def emit(self, message) -> None:
         print("Emitting message of size: ", len(message))

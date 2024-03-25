@@ -3,6 +3,7 @@ import os
 import uuid
 from datetime import datetime
 from pprint import pprint
+from typing import Any, Dict
 
 import rospy
 
@@ -27,8 +28,8 @@ track_waypoints = TrackWaypoints()
 class RunState:
     __slots__ = 'params', 'center_reward', 'heading_reward', 'steering_reward', 'speed_reward', 'historic_data', 'target_data', 'curve_data'
 
-    def __init__(self, params, prev_params):
-        self.params = Params.get_params(params)
+    def __init__(self, params: Params, prev_params: Params) -> None:
+        self.params = params
         target_processor = TargetProcessor(
             track_waypoints=track_waypoints,
             location=self.params.location,
@@ -79,7 +80,7 @@ class RunState:
 
 
     @property
-    def reward(self):
+    def reward(self) -> float:
         if not self.params.is_crashed and not self.params.is_offtrack and not self.params.is_reversed:
             reward = (self.center_reward.reward + self.speed_reward.reward + self.heading_reward.reward + self.steering_reward.reward) / 4
             return max(reward, MIN_REWARD)
@@ -87,16 +88,14 @@ class RunState:
             return MIN_REWARD
 
     @property
-    def publishing_data(self):
+    def publishing_data(self) -> Dict[str, Any]:
         return {
             'version': 0,
             'version_type': 'phr',
             'params': self.params.model_dump(),
             'sim_run_id': self.params.sim_run_id,
-            'steps': self.params.steps,
-            'history': self.historic_data.model_dump(),
             'date_time': self.params.date_time,
-            **self.reward_data
+            **self.print_data
         }
 
     @property
@@ -107,6 +106,7 @@ class RunState:
             'progress': self.params.progress,
             'target': self.target_data.model_dump(),
             'curve': self.curve_data.model_dump(),
+            'history': self.historic_data.model_dump(),
             **self.reward_data
         }
 
@@ -134,28 +134,27 @@ class Simulation:
         self.run_state = None
 
 
-    def initialize(self, params):
-        track_waypoints._create_waypoints(params['waypoints'], params['track_width'])
+    def initialize(self, params: Params):
+        track_waypoints._create_waypoints(params.waypoints, params.track_width)
         track_segments.create_segments(track_waypoints.waypoints)
         self.publish_initialization(params)
         self.sim_state_initialized = True
 
-    def publish_initialization(self, params):
+    def publish_initialization(self, params: Params):
 
         pub_data = {
-            'date_time': params['date_time'],
-            'sagemaker_prefix': os.environ['SAGEMAKER_SHARED_S3_PREFIX'],
-            'world_name': os.environ['WORLD_NAME'],
-            'training_uuid': params['training_uuid'],
-            'rollout_idx': params['rollout_idx'],
+            'date_time': params.date_time,
+            'sagemaker_prefix': params.sagemaker_prefix,
+            'world_name': params.world_name,
+            'training_uuid': params.training_uuid,
+            'rollout_idx': params.rollout_idx,
             'sim_run_id': self.sim_run_id,
-            'steps': params['steps'],
-            'track_width': params['track_width'],
-            'track_length': params['track_length'],
-
-            **params['hyperparameters'],
-            **params['metadata'],
-            'waypoints': params['waypoints']
+            'steps': params.steps,
+            'track_width': params.track_width,
+            'track_length': params.track_length,
+            'hyperparameters': params.hyperparameters.model_dump(),
+            'model_metadata': params.metadata.model_dump(),
+            'waypoints': params.waypoints
         }
         self.emitter.emit(json.dumps(pub_data))
 
@@ -165,38 +164,37 @@ class Simulation:
         self.emitter.emit(msg)
 
 
-    def add_run_state(self, params, sim_time):
-        params['rollout_idx'] = os.environ['ROLLOUT_IDX']
-        params['training_uuid'] = os.environ['TRAINING_UUID']
-        params['sim_time'] = sim_time
-        params['metadata'] = params['model_metadata']
-        params['sim_run_id'] = self.sim_run_id
+    def add_run_state(self, param_dict, sim_time):
+        param_dict['sim_time'] = sim_time
+        param_dict['sim_run_id'] = self.sim_run_id
+        params = Params.get_params(param_dict)
         if not self.sim_state_initialized:
             self.initialize(params)
 
-        steps = params['steps']
+
         run_state = RunState(params, self.prev_params)
         self.prev_params = run_state.params
         self.run_state = run_state
         self.publish_data()
-        self.timer.record_time(steps)
+        self.timer.record_time(params.steps)
         return run_state
 
 
 
 sim = Simulation()
 
+
 # noinspection PyUnusedFunction
-def reward_function(params):
+def reward_function(param_dict: Dict[str, Any]) -> float:
     '''
     Example of penalize steering, which helps mitigate zig-zag behaviors
     '''
     tn = rospy.Time().now()
     dt = datetime.now().isoformat()
     sim_time = tn.secs + tn.nsecs * 1e-9
-    params['sim_time'] = sim_time
-    params['date_time'] = dt
-    run_state = sim.add_run_state(params, sim_time)
+    param_dict['sim_time'] = sim_time
+    param_dict['date_time'] = dt
+    run_state = sim.add_run_state(param_dict, sim_time)
     pprint(run_state.print_data)
 
     return run_state.reward

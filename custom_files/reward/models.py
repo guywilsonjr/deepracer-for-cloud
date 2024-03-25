@@ -20,17 +20,7 @@ InputSpeed = Annotated[float, Field(ge=0, le=MAX_SPEED)]
 Reward = Annotated[float, Field(ge=0, le=1), AfterValidator(lambda x: max(x, MIN_REWARD))]
 SpeedSetting = Annotated[float, Field(ge=MIN_CONFIG_SPEED, le=MAX_CONFIG_SPEED)]
 SteeringAngleSetting = Annotated[float, Field(ge=MIN_CONFIG_STEERING, le=MAX_CONFIG_STEERING)]
-'''
-class Reward(ConstrainedFloat):
-    @model_validator(mode='after')
-    def validator(self):
-        self.root = max(self.root, MIN_REWARD)
-        return self
 
-    @property
-    def asfloat(self):
-        return self.root
-'''
 
 class CurveInfo(BaseModel):
     straight: Optional[Angle360]
@@ -56,18 +46,18 @@ class HeadingReward(SubReward, frozen=True):
 class SpeedReward(SubReward, frozen=True):
     target_speed: float
     speed: float
-    curve_info: CurveInfo
+    curve_info: Annotated[CurveInfo, Field(exclude=True)]
     curve_param: float
-    max_speed: float
-    min_speed: float
+    max_speed: Annotated[float, Field(exclude=True)]
+    min_speed: Annotated[float, Field(exclude=True)]
     prev_speed: Optional[float]
 
 
 class SteeringReward(SubReward, frozen=True):
     curve_param: float
     steering_angle: float
-    heading360: float
-    curve_info: CurveInfo
+    heading360: Annotated[float, Field(exclude=True)]
+    curve_info: Annotated[CurveInfo, Field(exclude=True)]
 
 
 class HistoricData(BaseModel):
