@@ -11,10 +11,6 @@ from .track import TrackWaypoints
 
 class TargetData(BaseModel):
     target_point: TrackPoint
-    target_line: LineSegment
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class TargetProcessor(BaseModel):
@@ -44,5 +40,4 @@ class TargetProcessor(BaseModel):
         else:
             raise ValueError("No closest point found on line")
 
-        target_line = LineSegment(self.location, target_point)
-        return TargetData(target_point=target_point, target_line=target_line)
+        return TargetData(target_point=target_point)

@@ -489,4 +489,4 @@ def reward_function(params):
     Example of penalize steering, which helps mitigate zig-zag behaviors
     '''
     sim.add_run_state(params)
-    return sim.run_state.reward
+    return sim.run_state.get_reward

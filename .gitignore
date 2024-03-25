@@ -13,3 +13,5 @@ autorun.s3url
 nohup.out
 /*.sh
 _
+aws_session.json
+.env

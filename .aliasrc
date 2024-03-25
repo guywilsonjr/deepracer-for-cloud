@@ -1,3 +1,10 @@
 source bin/activate.sh
 alias restart-viewer='dr-stop-viewer && dr-start-viewer'
 alias loganalysis='dr-start-loganalysis'
+alias aws-userid='aws sts get-caller-identity | jq .UserId | tr'
+alias gen_session='aws sts get-session-token --duration-seconds 3600 > aws_session.json'
+alias session_access_key="cat aws_session.json | jq .Credentials.AccessKeyId | tr -d '\"'"
+alias session_secret_key="cat aws_session.json | jq .Credentials.SecretAccessKey | tr -d '\"'"
+alias session_token_key="cat aws_session.json | jq .Credentials.SessionToken | tr -d '\"'"
+alias uuid='python3 -c "import uuid; print(uuid.uuid1())"'
+alias start_training='gen_session && DR_TRAINING_UUID=$(uuid) DR_SNS_ACCESS_KEY_ID=$(session_access_key) DR_SNS_SECRET_ACCESS_KEY=$(session_secret_key) DR_SNS_SESSION_TOKEN=$(session_token_key) dr-start-training'

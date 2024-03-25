@@ -1,4 +1,5 @@
 import time
+from typing import Tuple
 
 import numpy
 import rospy
@@ -7,14 +8,14 @@ import rospy
 class Timer:
     __slots__ = 'track_time', 'time', 'total_frames', 'fps', 'rtf'
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.track_time = True
         TIME_WINDOW = 2
         self.time = numpy.zeros([TIME_WINDOW, 2])
         self.total_frames = 0
         self.fps = 15
 
-    def get_time(self):
+    def get_time(self) -> Tuple[float, float, int]:
         wall_time_incr = numpy.max(self.time[:, 0]) - numpy.min(self.time[:, 0])
         sim_time_incr = numpy.max(self.time[:, 1]) - numpy.min(self.time[:, 1])
 
@@ -24,7 +25,7 @@ class Timer:
 
         return rtf, fps, frames
 
-    def record_time(self, steps):
+    def record_time(self, steps: int) -> None:
         index = int(steps) % self.time.shape[0]
         self.time[index, 0] = time.time()
         self.time[index, 1] = rospy.get_time()

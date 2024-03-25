@@ -511,4 +511,4 @@ def reward_function(params):
     '''
     sim.add_run_state(params)
     sim.run_state.validate()
-    return sim.run_state.reward
+    return sim.run_state.get_reward

@@ -426,4 +426,4 @@ def reward_function(params):
         sim.set_sim_state(params['waypoints'])
 
     sim.add_run_state(params)
-    return sim.run_state.reward
+    return sim.run_state.get_reward

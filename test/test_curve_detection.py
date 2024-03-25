@@ -30,7 +30,7 @@ track_length = init_json_msg_json['track_length']
 wps = init_json_msg_json['waypoints']
 track_waypoints = TrackWaypoints()
 track_segments = TrackSegments()
-track_waypoints.create_waypoints(wps, 0.225*4)
+track_waypoints._create_waypoints(wps, 0.225 * 4)
 track_segments.create_segments(track_waypoints.waypoints)
 NUM_GEN_POINTS = 4
 print('Found waypoints:', len(wps))
