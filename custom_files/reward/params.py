@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
 from .geometry import TrackPoint
-from .hyperparameters import Hyperparameters
 from .metadata import ModelMetadata
 from .models import Distance, Heading, Angle360, Index, Speed, SteeringAngle, Steps
 from .util import to360
@@ -20,9 +19,8 @@ class CoreParams(BaseModel):
 
 class Params(CoreParams):
     metadata: ModelMetadata = Field(exclude=True)
-    hyperparameters: Hyperparameters = Field(exclude=True)
     sim_time: Annotated[float, Field(ge=0)]
-    sim_run_id: Annotated[str, Field(min_length=36, max_length=36)]
+    episode_id: Annotated[str, Field(min_length=36, max_length=36)]
 
     x: float = Field(exclude=True)
     y: float = Field(exclude=True)
@@ -57,9 +55,7 @@ class Params(CoreParams):
     steps: Steps
 
     rollout_idx: Annotated[int, Field(ge=0, exclude=True)] = int(os.environ['ROLLOUT_IDX'])
-    training_uuid: Annotated[str, Field(min_length=36, max_length=36, exclude=True)] = os.environ['TRAINING_UUID']
-    sagemaker_prefix: Annotated[str, Field(exclude=True)] = os.environ['SAGEMAKER_SHARED_S3_PREFIX']
-    world_name: Annotated[str, Field(exclude=True)] = os.environ['WORLD_NAME']
+    sim_id: Annotated[int, Field(exclude=True)] = int(os.environ['SIMULATION_ID'])
 
     @classmethod
     def get_params(cls, data) -> 'Params':

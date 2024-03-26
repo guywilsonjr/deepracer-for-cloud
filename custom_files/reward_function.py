@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 from pprint import pprint
 from typing import Any, Dict
-
 import rospy
 
 from .reward.centerline_reward import CenterlineRewardProcessor
@@ -77,8 +76,6 @@ class RunState:
         self.speed_reward = speed_processor.get_reward()
 
 
-
-
     @property
     def reward(self) -> float:
         if not self.params.is_crashed and not self.params.is_offtrack and not self.params.is_reversed:
@@ -93,8 +90,9 @@ class RunState:
             'version': 0,
             'version_type': 'phr',
             'params': self.params.model_dump(),
-            'sim_run_id': self.params.sim_run_id,
+            'episode_id': self.params.episode_id,
             'date_time': self.params.date_time,
+            'message_type': 'STEP',
             **self.print_data
         }
 
@@ -123,13 +121,13 @@ class RunState:
 
 
 class Simulation:
-    __slots__ = 'sim_state_initialized', 'run_states', 'timer', 'emitter', 'sim_run_id', 'curve_metrics', 'prev_params', 'run_state'
+    __slots__ = 'sim_state_initialized', 'run_states', 'timer', 'emitter', 'episode_id', 'curve_metrics', 'prev_params', 'run_state'
 
     def __init__(self):
         self.sim_state_initialized = False
         self.timer = Timer()
         self.emitter = Emitter()
-        self.sim_run_id = str(uuid.uuid1())
+        self.episode_id = str(uuid.uuid1())
         self.prev_params = None
         self.run_state = None
 
@@ -141,19 +139,15 @@ class Simulation:
         self.sim_state_initialized = True
 
     def publish_initialization(self, params: Params):
-
         pub_data = {
+            'message_type': 'EPISODE_START',
             'date_time': params.date_time,
-            'sagemaker_prefix': params.sagemaker_prefix,
-            'world_name': params.world_name,
-            'training_uuid': params.training_uuid,
+            'sim_id': params.sim_id,
             'rollout_idx': params.rollout_idx,
-            'sim_run_id': self.sim_run_id,
+            'episode_id': params.episode_id,
             'steps': params.steps,
             'track_width': params.track_width,
             'track_length': params.track_length,
-            'hyperparameters': params.hyperparameters.model_dump(),
-            'model_metadata': params.metadata.model_dump(),
             'waypoints': params.waypoints
         }
         self.emitter.emit(json.dumps(pub_data))
@@ -166,11 +160,10 @@ class Simulation:
 
     def add_run_state(self, param_dict, sim_time):
         param_dict['sim_time'] = sim_time
-        param_dict['sim_run_id'] = self.sim_run_id
+        param_dict['episode_id'] = self.episode_id
         params = Params.get_params(param_dict)
         if not self.sim_state_initialized:
             self.initialize(params)
-
 
         run_state = RunState(params, self.prev_params)
         self.prev_params = run_state.params
