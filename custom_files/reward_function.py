@@ -31,7 +31,7 @@ class RunState:
         self.params = params
         target_processor = TargetProcessor(
             track_waypoints=track_waypoints,
-            location=self.params.location,
+            location=self.params.loc,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index
         )
         curve_processor = CurveProcessor(
@@ -58,7 +58,7 @@ class RunState:
 
         heading_processor = HeadingRewardProcessor(
             track_waypoints=track_waypoints,
-            location=self.params.location,
+            location=self.params.loc,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index,
             heading360=self.params.heading360,
             target_data=self.target_data
@@ -89,7 +89,7 @@ class RunState:
         return {
             'version': 0,
             'version_type': 'phr',
-            'params': self.params.model_dump(),
+            **self.params.model_dump(),
             'episode_id': self.params.episode_id,
             'date_time': self.params.date_time,
             'message_type': 'STEP',
@@ -183,7 +183,7 @@ def reward_function(param_dict: Dict[str, Any]) -> float:
     Example of penalize steering, which helps mitigate zig-zag behaviors
     '''
     tn = rospy.Time().now()
-    dt = datetime.now().isoformat()
+    dt = datetime.utcnow().isoformat()
     sim_time = tn.secs + tn.nsecs * 1e-9
     param_dict['sim_time'] = sim_time
     param_dict['date_time'] = dt

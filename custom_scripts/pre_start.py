@@ -1,5 +1,7 @@
 import json
 import os
+from datetime import datetime
+
 import boto3
 import random
 
@@ -36,6 +38,7 @@ sns.publish(
     TopicArn=sns_topic_arn,
     Message=json.dumps({
         'message_type': message_type,
+        'date_time': datetime.utcnow().isoformat(),
         'sim_id': SIMULATION_ID,
         'hyperparameters': hyperparameters,
         'model_metadata': model_metadata,

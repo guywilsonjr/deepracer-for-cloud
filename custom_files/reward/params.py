@@ -48,21 +48,20 @@ class Params(CoreParams):
     heading360: Angle360
     is_left_of_center: bool
     heading: Heading
-    location: TrackPoint
+    loc: TrackPoint
     progress_percentage: Annotated[float, Field(ge=0, le=1)]
     speed: Speed
     steering_angle: SteeringAngle
     steps: Steps
-
-    rollout_idx: Annotated[int, Field(ge=0, exclude=True)] = int(os.environ['ROLLOUT_IDX'])
-    sim_id: Annotated[int, Field(exclude=True)] = int(os.environ['SIMULATION_ID'])
+    rollout_idx: int = int(os.environ['ROLLOUT_IDX'])
+    sim_id: int = int(os.environ['SIMULATION_ID'])
 
     @classmethod
     def get_params(cls, data) -> 'Params':
         data['closest_ahead_waypoint_index'] = data['closest_waypoints'][1]
         data['closest_behind_waypoint_index'] = data['closest_waypoints'][0]
         data['heading360'] = to360(data['heading'])
-        data['location'] = TrackPoint(x=data['x'], y=data['y'])
+        data['loc'] = TrackPoint(x=data['x'], y=data['y'])
         data['progress_percentage'] = max(0, data['progress'] * 0.01)
         data['progress'] = max(0, data['progress'])
         return cls(**data)
