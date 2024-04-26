@@ -6,12 +6,13 @@ import rospy
 
 
 class Timer:
-    __slots__ = 'track_time', 'time', 'total_frames', 'fps', 'rtf'
+    __slots__ = 'track_time', 'time', 'total_frames', 'fps', 'rtf', 'time_window', 'prefix'
 
-    def __init__(self) -> None:
+    def __init__(self, prefix: str, time_window: int) -> None:
         self.track_time = True
-        TIME_WINDOW = 2
-        self.time = numpy.zeros([TIME_WINDOW, 2])
+        self.time_window = time_window
+        self.prefix = prefix
+        self.time = numpy.zeros([self.time_window, 2])
         self.total_frames = 0
         self.fps = 15
 
@@ -31,4 +32,5 @@ class Timer:
         self.time[index, 1] = rospy.get_time()
         self.rtf, self.fps, frames = self.get_time()
         self.total_frames += frames
-        print("TIME: s: {}, rtf: {}, fps:{}, frames: {}".format(int(steps), round(self.rtf, 2), round(self.fps, 2), frames))
+        if int(steps) % 25 == 0:
+            print("{}: TIME: s: {}, rtf: {}, fps:{}, frames: {}".format(self.prefix, int(steps), round(self.rtf, 2), round(self.fps, 2), frames))

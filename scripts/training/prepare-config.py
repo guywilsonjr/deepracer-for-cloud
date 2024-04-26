@@ -15,6 +15,7 @@ config['KINESIS_VIDEO_STREAM_NAME'] = os.environ.get('DR_KINESIS_STREAM_NAME', '
 config['METRICS_S3_BUCKET'] = os.environ.get('DR_LOCAL_S3_BUCKET', 'bucket')
 
 metrics_prefix = os.environ.get('DR_LOCAL_S3_METRICS_PREFIX', None)
+
 if metrics_prefix is not None:
     config['METRICS_S3_OBJECT_KEY'] = '{}/TrainingMetrics.json'.format(metrics_prefix)
 else:
@@ -31,6 +32,8 @@ config['PROFILER_S3_BUCKET'] = os.environ.get('DR_LOCAL_S3_BUCKET', 'bucket')
 config['PROFILER_S3_PREFIX'] = os.environ.get('DR_LOCAL_S3_MODEL_PREFIX', 'rl-deepracer-sagemaker') + '/profiler'
 config['SIMTRACE_S3_BUCKET'] = os.environ.get('DR_LOCAL_S3_BUCKET', 'bucket')
 config['SIMTRACE_S3_PREFIX'] = os.environ.get('DR_LOCAL_S3_MODEL_PREFIX', 'rl-deepracer-sagemaker')
+config['MP4_S3_BUCKET'] = os.environ.get('DR_LOCAL_S3_BUCKET', 'bucket')
+config['MP4_S3_OBJECT_PREFIX'] = os.environ.get('DR_LOCAL_S3_MODEL_PREFIX', 'rl-deepracer-sagemaker') + '/videos'
 config['TRAINING_JOB_ARN'] = 'arn:Dummy'
 
 # Car and training 

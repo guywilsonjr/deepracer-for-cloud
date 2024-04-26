@@ -20,6 +20,7 @@ class SpeedRewardProcessor(BaseModel):
         '''
         Straights can be a 0 degree angle therefore check if it's not none
         '''
+        '''
         if self.curve_info.straight is not None and self.curve_info.straight_enter is not None:
             curve_param = 1.0
         elif self.curve_info.straight_enter is not None:
@@ -29,12 +30,12 @@ class SpeedRewardProcessor(BaseModel):
         if self.curve_info.straight_exit is not None:
             curve_param *= 1.0
         if self.curve_info.curve_exit:
-            curve_param = curve_param ** 1
+            curve_param = 1.0
         if self.curve_info.curve:
             curve_param = 0.5
         if self.curve_info.curve_enter:
-            curve_param *= 0.25
-
+            curve_param = 0.25
+        '''
         target_speed = self.min_speed + (self.max_speed - self.min_speed) * curve_param
         target_speed = min(target_speed, self.max_speed)
         speed_diff_factor = abs(self.speed - target_speed) / MAX_SPEED_DIFF

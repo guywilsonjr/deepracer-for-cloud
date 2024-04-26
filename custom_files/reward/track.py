@@ -1,12 +1,9 @@
-import math
 from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel
 from shapely.geometry import LinearRing, Polygon
 
-from .constants import STRAIGHT_ANGLE_THRESHOLD
 from .geometry import LinearWaypointSegment, TrackPoint, TrackWaypoint
-from .util import to360
 
 
 class TpProcessor(BaseModel):

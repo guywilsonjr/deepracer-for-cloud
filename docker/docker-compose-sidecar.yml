@@ -1,0 +1,41 @@
+
+version: '3.7'
+
+networks:
+  default:
+    external: true
+    name: sagemaker-local
+
+services:
+  sidecar:
+    image: deepracer-sidecar:latest
+    environment:
+      - SNS_ACCESS_KEY_ID=${DR_SNS_ACCESS_KEY_ID}
+      - SNS_SECRET_ACCESS_KEY=${DR_SNS_SECRET_ACCESS_KEY}
+      - SNS_SESSION_TOKEN=${DR_SNS_SESSION_TOKEN}
+      - SNS_TOPIC_ARN=${DR_SNS_TOPIC_ARN}
+      - AWS_DEFAULT_REGION=${DR_AWS_APP_REGION}
+      - SIM_IMAGE_BUCKET_NAME=deepracerservice-data666c94c7-3ruimsa2zsh2
+    volumes:
+      - '${DR_DIR}/custom_tmp/sidecar:/sockets'
+
+  sidecar_processor:
+    image: deeproc:latest
+    environment:
+      - AWS_ACCESS_KEY_ID=${DR_SNS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${DR_SNS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${DR_SNS_SESSION_TOKEN}
+      - AWS_DEFAULT_REGION=us-west-1
+      - SQS_QUEUE_URL=https://sqs.us-west-1.amazonaws.com/936272581790/DeepRacerService-IngestionQueue9CC91140-C9w412UYnKWl
+      - SIM_TRACE_TABLE=DeepRacerService-SimTraceAD3C8098-YIMUE1OMG2MN
+      - SIM_TABLE=DeepRacerService-SimulationsE0AC9CF0-1OL26YNQOHJ4I
+      - SIM_WORKERS_TABLE=DeepRacerService-SimulationWorkers77502D52-WQC3K2NLMU2T
+      - ROLLOUTS_TABLE=DeepRacerService-Rollouts1951FC27-1VI14SRW46NWU
+      - EPISODES_TABLE=DeepRacerService-Episodes2FA04809-1CCUE7QD8DAHT
+    volumes:
+      - '${DR_DIR}/custom_tmp/sidecar:/sockets'
+
+  pyroscope:
+    image: grafana/pyroscope:latest
+    ports:
+      - "4040:4040"

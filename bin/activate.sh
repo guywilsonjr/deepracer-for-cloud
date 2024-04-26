@@ -106,7 +106,7 @@ elif [[ "${DR_CLOUD,,}" == "local" ]]; then
   export DR_LOCAL_S3_ENDPOINT_URL="http://localhost:9000"
   export DR_MINIO_URL="http://minio:9000"
   DR_LOCAL_PROFILE_ENDPOINT_URL="--profile $DR_LOCAL_S3_PROFILE --endpoint-url $DR_LOCAL_S3_ENDPOINT_URL"
-  DR_TRAIN_COMPOSE_FILE="$DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-training.yml $DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-endpoint.yml"
+  DR_TRAIN_COMPOSE_FILE="$DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-training.yml $DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-endpoint.yml $DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-sidecar.yml"
   DR_EVAL_COMPOSE_FILE="$DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-eval.yml $DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-endpoint.yml"
   DR_MINIO_COMPOSE_FILE="$DR_DOCKER_FILE_SEP $DIR/docker/docker-compose-local.yml"
 elif [[ "${DR_CLOUD,,}" == "remote" ]]; then
@@ -171,7 +171,7 @@ if [[ -n "${DR_MINIO_COMPOSE_FILE}" ]]; then
   export MINIO_KMS_KES_CERT_FILE=root.cert
   export MINIO_KMS_KES_KEY_NAME=my-minio-sse-kms-key
   if [[ "${DR_DOCKER_STYLE,,}" == "swarm" ]]; then
-    docker stack deploy $DR_MINIO_COMPOSE_FILE s3
+    docker stack deploy $DR_MINIO_COMPOSE_FILE s3 --resolve-image=always
   else
     docker compose $DR_MINIO_COMPOSE_FILE -p s3 up -d
   fi
@@ -211,3 +211,4 @@ function dr-update {
 function dr-reload {
   source $DIR/bin/activate.sh $DR_CONFIG
 }
+echo 'Activated'

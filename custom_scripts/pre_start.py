@@ -11,11 +11,9 @@ s3_bucket_name = os.environ['DR_LOCAL_S3_BUCKET']
 world_name = os.environ['DR_WORLD_NAME']
 best_model_metric = os.environ['DR_TRAIN_BEST_MODEL_METRIC']
 model_prefix = os.environ['DR_LOCAL_S3_MODEL_PREFIX']
-SIMULATION_ID = random.SystemRandom().randint(0, 999999)
+SIMULATION_ID = random.SystemRandom().randint(0, 2 ** 32 - 1)
 with open('.simulation', 'w') as f:
     f.write(str(SIMULATION_ID))
-
-
 
 
 minio_session = boto3.Session(profile_name=local_profile)

@@ -31,7 +31,7 @@ class RunState:
         self.params = params
         target_processor = TargetProcessor(
             track_waypoints=track_waypoints,
-            location=self.params.loc,
+            location=self.params.location,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index
         )
         curve_processor = CurveProcessor(
@@ -53,12 +53,9 @@ class RunState:
             curve_info=self.curve_data,
             track_segments=track_segments
         )
-
-
-
         heading_processor = HeadingRewardProcessor(
             track_waypoints=track_waypoints,
-            location=self.params.loc,
+            location=self.params.location,
             closest_ahead_waypoint_index=self.params.closest_ahead_waypoint_index,
             heading360=self.params.heading360,
             target_data=self.target_data
@@ -87,20 +84,15 @@ class RunState:
     @property
     def publishing_data(self) -> Dict[str, Any]:
         return {
-            'version': 0,
-            'version_type': 'phr',
             **self.params.model_dump(),
-            'episode_id': self.params.episode_id,
             'date_time': self.params.date_time,
-            'message_type': 'STEP',
-            **self.print_data
+            'message_type': 'STEP'
         }
 
     @property
     def print_data(self):
         return {
             'steps': self.params.steps,
-            'sim_time': self.params.sim_time,
             'progress': self.params.progress,
             'target': self.target_data.model_dump(),
             'curve': self.curve_data.model_dump(),
@@ -121,13 +113,14 @@ class RunState:
 
 
 class Simulation:
-    __slots__ = 'sim_state_initialized', 'run_states', 'timer', 'emitter', 'episode_id', 'curve_metrics', 'prev_params', 'run_state'
+    __slots__ = 'sim_state_initialized', 'run_states', 'short_timer', 'emitter', 'entrypoint_id', 'curve_metrics', 'prev_params', 'run_state', 'long_timer'
 
     def __init__(self):
         self.sim_state_initialized = False
-        self.timer = Timer()
+        self.short_timer = Timer('short', 2)
+        self.long_timer = Timer('long', 10)
         self.emitter = Emitter()
-        self.episode_id = str(uuid.uuid1())
+        self.entrypoint_id = str(uuid.uuid1())
         self.prev_params = None
         self.run_state = None
 
@@ -139,28 +132,26 @@ class Simulation:
         self.sim_state_initialized = True
 
     def publish_initialization(self, params: Params):
+        print('Publishing Reward Start Message')
         pub_data = {
-            'message_type': 'EPISODE_START',
+            'message_type': 'REWARD_START',
             'date_time': params.date_time,
             'sim_id': params.sim_id,
             'rollout_idx': params.rollout_idx,
-            'episode_id': params.episode_id,
+            'worker_id': params.worker_id,
             'steps': params.steps,
             'track_width': params.track_width,
             'track_length': params.track_length,
             'waypoints': params.waypoints
         }
-        self.emitter.emit(json.dumps(pub_data))
+        self.emitter.emit(pub_data)
 
     def publish_data(self):
         rs = self.run_state.publishing_data
-        msg = json.dumps(rs)
-        self.emitter.emit(msg)
+        self.emitter.emit(rs)
 
 
-    def add_run_state(self, param_dict, sim_time):
-        param_dict['sim_time'] = sim_time
-        param_dict['episode_id'] = self.episode_id
+    def add_run_state(self, param_dict):
         params = Params.get_params(param_dict)
         if not self.sim_state_initialized:
             self.initialize(params)
@@ -169,7 +160,8 @@ class Simulation:
         self.prev_params = run_state.params
         self.run_state = run_state
         self.publish_data()
-        self.timer.record_time(params.steps)
+        self.short_timer.record_time(params.steps)
+        self.long_timer.record_time(params.steps)
         return run_state
 
 
@@ -182,12 +174,13 @@ def reward_function(param_dict: Dict[str, Any]) -> float:
     '''
     Example of penalize steering, which helps mitigate zig-zag behaviors
     '''
-    tn = rospy.Time().now()
     dt = datetime.utcnow().isoformat()
-    sim_time = tn.secs + tn.nsecs * 1e-9
-    param_dict['sim_time'] = sim_time
     param_dict['date_time'] = dt
-    run_state = sim.add_run_state(param_dict, sim_time)
-    pprint(run_state.print_data)
+    run_state = sim.add_run_state(param_dict)
+    #pprint(run_state.print_data)
 
-    return run_state.reward
+    rs_reward = run_state.reward
+    # messages = sim.emitter.get_messages()
+    sim.emitter.messages = []
+
+    return rs_reward # , messages

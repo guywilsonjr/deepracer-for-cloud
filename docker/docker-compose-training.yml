@@ -26,6 +26,8 @@ services:
   robomaker:
     image: awsdeepracercommunity/deepracer-robomaker:${DR_ROBOMAKER_IMAGE}
     command: ["${ROBOMAKER_COMMAND}"]
+    volumes:
+      - '${DR_DIR}/custom_tmp/sidecar:/sockets'
     ports:
       - "${DR_ROBOMAKER_TRAIN_PORT}:8080"
       - "${DR_ROBOMAKER_GUI_PORT}:5900"
@@ -50,3 +52,5 @@ services:
       - SIMULATION_ID=${DR_SIMULATION_ID}
       - AWS_DEFAULT_REGION=${DR_AWS_APP_REGION}
     init: true
+
+

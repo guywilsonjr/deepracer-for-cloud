@@ -16,7 +16,7 @@ class HistoryProcessor(BaseModel):
             return HistoricData(prev_speed=0, velocity=0, distance=0, dx=0, dy=0, dt=0)
         dx = self.params.x - self.prev_params.x
         dy = self.params.y - self.prev_params.y
-        dt = self.params.sim_time - self.prev_params.sim_time
+        dt = self.params.tstamp - self.prev_params.tstamp
         dist = (dx ** 2 + dy ** 2) ** 0.5
         if dt == 0:
             velocity = INF
