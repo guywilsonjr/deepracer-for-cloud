@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 source $DR_DIR/bin/scripts_wrapper.sh
 
 usage() {
@@ -64,6 +63,7 @@ if [ ! -d /tmp/sagemaker ]; then
   sudo chmod -R g+w /tmp/sagemaker
 fi
 
+
 # set evaluation specific environment variables
 STACK_NAME="deepracer-$DR_RUN_ID"
 STACK_CONTAINERS=$(docker stack ps $STACK_NAME 2>/dev/null | wc -l)
@@ -82,6 +82,7 @@ rm -f ${WORK_DIR}/*
 REWARD_FILE=$(aws $DR_LOCAL_PROFILE_ENDPOINT_URL s3 cp s3://${DR_LOCAL_S3_BUCKET}/${DR_LOCAL_S3_REWARD_KEY} ${WORK_DIR} --no-progress 2>/dev/null | awk '/reward/ {print $4}' | xargs readlink -f 2>/dev/null)
 METADATA_FILE=$(aws $DR_LOCAL_PROFILE_ENDPOINT_URL s3 cp s3://${DR_LOCAL_S3_BUCKET}/${DR_LOCAL_S3_MODEL_METADATA_KEY} ${WORK_DIR} --no-progress 2>/dev/null | awk '/model_metadata.json$/ {print $4}' | xargs readlink -f 2>/dev/null)
 HYPERPARAM_FILE=$(aws $DR_LOCAL_PROFILE_ENDPOINT_URL s3 cp s3://${DR_LOCAL_S3_BUCKET}/${DR_LOCAL_S3_HYPERPARAMETERS_KEY} ${WORK_DIR} --no-progress 2>/dev/null | awk '/hyperparameters.json$/ {print $4}' | xargs readlink -f 2>/dev/null)
+
 
 if [ -n "$METADATA_FILE" ] && [ -n "$REWARD_FILE" ] && [ -n "$HYPERPARAM_FILE" ]; then
   echo "Training of model s3://$DR_LOCAL_S3_BUCKET/$DR_LOCAL_S3_MODEL_PREFIX starting."
@@ -125,7 +126,6 @@ fi
 export DR_CURRENT_PARAMS_FILE=${DR_LOCAL_S3_TRAINING_PARAMS_FILE}
 
 WORKER_CONFIG=$(python3 $DR_DIR/scripts/training/prepare-config.py)
-
 if [ "$DR_WORKERS" -gt 1 ]; then
   echo "Starting $DR_WORKERS workers"
 
@@ -147,7 +147,6 @@ else
   export ROBOMAKER_COMMAND="./run.sh run distributed_training.launch"
   echo "Creating Robomaker configuration in $S3_PATH/$DR_LOCAL_S3_TRAINING_PARAMS_FILE"
 fi
-
 # Check if we are using Host X -- ensure variables are populated
 if [[ "${DR_HOST_X,,}" == "true" ]]; then
   if [[ -n "$DR_DISPLAY" ]]; then
@@ -186,12 +185,17 @@ if [[ "${DR_DOCKER_STYLE,,}" == "swarm" ]]; then
     echo "       Example: docker node update --label-add Sagemaker=true $(docker node inspect self | jq .[0].ID -r)"
     exit 1
   fi
-
+  echo "Starting Swarm"
   DISPLAY=$ROBO_DISPLAY docker stack deploy $COMPOSE_FILES $STACK_NAME
+  echo "Running: DISPLAY=$ROBO_DISPLAY docker stack deploy $COMPOSE_FILES $STACK_NAME"
+
 
 else
   DISPLAY=$ROBO_DISPLAY docker compose $COMPOSE_FILES -p $STACK_NAME up -d --scale robomaker=$DR_WORKERS
+
 fi
+
+
 
 # Viewer
 if [ -n "$OPT_VIEWER" ]; then

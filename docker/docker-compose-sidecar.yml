@@ -36,6 +36,8 @@ services:
       - '${DR_DIR}/custom_tmp/sidecar:/sockets'
 
   pyroscope:
+    hostname: pyroscope
     image: grafana/pyroscope:latest
     ports:
       - "4040:4040"
+

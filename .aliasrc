@@ -2,7 +2,7 @@ source bin/activate.sh
 alias restart-viewer='dr-stop-viewer && dr-start-viewer'
 alias loganalysis='dr-start-loganalysis'
 
-alias gen_session='aws sts get-session-token --duration-seconds 3600 > aws_session.json'
+alias gen_session='aws sts get-session-token --duration-seconds 7200 > aws_session.json'
 alias session_access_key="cat aws_session.json | jq .Credentials.AccessKeyId | tr -d '\"'"
 alias session_secret_key="cat aws_session.json | jq .Credentials.SecretAccessKey | tr -d '\"'"
 alias session_token_key="cat aws_session.json | jq .Credentials.SessionToken | tr -d '\"'"

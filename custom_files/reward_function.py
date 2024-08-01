@@ -76,7 +76,7 @@ class RunState:
     @property
     def reward(self) -> float:
         if not self.params.is_crashed and not self.params.is_offtrack and not self.params.is_reversed:
-            reward = (self.center_reward.reward + self.speed_reward.reward + self.heading_reward.reward + self.steering_reward.reward) / 4
+            reward = self.speed_reward.reward * (self.center_reward.reward + self.heading_reward.reward + self.steering_reward.reward) / 4
             return max(reward, MIN_REWARD)
         else:
             return MIN_REWARD

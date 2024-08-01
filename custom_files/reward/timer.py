@@ -22,7 +22,7 @@ class Timer:
 
         rtf = sim_time_incr / wall_time_incr
         frames = (self.time.shape[0] - 1)
-        fps = frames / sim_time_incr
+        fps = frames / sim_time_incr if sim_time_incr > 0 else float('inf')
 
         return rtf, fps, frames
 
